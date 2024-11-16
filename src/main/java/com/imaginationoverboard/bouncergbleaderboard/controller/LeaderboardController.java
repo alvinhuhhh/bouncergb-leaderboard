@@ -1,5 +1,6 @@
 package com.imaginationoverboard.bouncergbleaderboard.controller;
 
+import com.imaginationoverboard.bouncergbleaderboard.domain.HighscoreList;
 import com.imaginationoverboard.bouncergbleaderboard.domain.LeaderboardEntry;
 import com.imaginationoverboard.bouncergbleaderboard.service.LeaderboardRepository;
 import lombok.AllArgsConstructor;
@@ -28,7 +29,7 @@ public class LeaderboardController {
     private final LeaderboardRepository repository;
 
     @GetMapping("/top")
-    public ResponseEntity<List<LeaderboardEntry>> getTop(
+    public ResponseEntity<HighscoreList> getTop(
             @RequestParam
             Optional<Integer> entries
     ) {
@@ -37,10 +38,11 @@ public class LeaderboardController {
 
             List<LeaderboardEntry> results = repository
                     .findByOrderByLevelDescTimeScoreAsc(Limit.of(entries.orElse(5)));
+            HighscoreList highscoreList = new HighscoreList(results);
 
             log.info("[top] Found number of entries: " + results.size());
 
-            return ResponseEntity.status(HttpStatus.OK).body(results);
+            return ResponseEntity.status(HttpStatus.OK).body(highscoreList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
