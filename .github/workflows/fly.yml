@@ -8,9 +8,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: ./mvnw package
+      - uses: actions/setup-java@master
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - run: mvn clean install package
 
       - run: flyctl deploy --config ./fly.toml --remote-only
         env:
