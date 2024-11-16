@@ -14,3 +14,6 @@ spring:
 security:
   username: ${APP_USERNAME}
   password: ${APP_PASSWORD}
+
+leaderboard:
+  max-entries: 50

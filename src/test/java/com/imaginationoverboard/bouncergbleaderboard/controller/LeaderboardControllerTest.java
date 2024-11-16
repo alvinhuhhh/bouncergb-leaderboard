@@ -2,11 +2,13 @@ package com.imaginationoverboard.bouncergbleaderboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.imaginationoverboard.bouncergbleaderboard.domain.LeaderboardEntry;
+import com.imaginationoverboard.bouncergbleaderboard.service.LeaderboardRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -21,6 +23,7 @@ import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -38,6 +41,9 @@ class LeaderboardControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @SpyBean
+    private LeaderboardRepository repository;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -117,5 +123,30 @@ class LeaderboardControllerTest {
         // Call endpoint under test
         mockMvc.perform(post("/insert").contentType(MediaType.APPLICATION_JSON_VALUE).content(content))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    void insertLeaderboardEntryWithDelete() throws Exception {
+        LeaderboardEntry leaderboardEntry1 = new LeaderboardEntry();
+        leaderboardEntry1.setPlayerName("John");
+        leaderboardEntry1.setTimeScore(50.5F);
+        String content1 = objectMapper.writeValueAsString(leaderboardEntry1);
+
+        LeaderboardEntry leaderboardEntry2 = new LeaderboardEntry();
+        leaderboardEntry2.setPlayerName("Alice");
+        leaderboardEntry2.setTimeScore(51.5F);
+        String content2 = objectMapper.writeValueAsString(leaderboardEntry2);
+
+        // Insert 1 record
+        mockMvc.perform(post("/insert").contentType(MediaType.APPLICATION_JSON_VALUE).content(content1))
+                .andExpect(status().isCreated());
+        Assertions.assertEquals(9, repository.count());
+
+        // Insert another record
+        mockMvc.perform(post("/insert").contentType(MediaType.APPLICATION_JSON_VALUE).content(content2))
+                .andExpect(status().isCreated());
+        Assertions.assertEquals(9, repository.count());
+        Assertions.assertFalse(repository.findById(UUID.fromString("c3e6dcad-1187-4256-ba20-fe4162e0289b")).isPresent());
     }
 }

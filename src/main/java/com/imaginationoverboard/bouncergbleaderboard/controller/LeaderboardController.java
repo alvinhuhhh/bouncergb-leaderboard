@@ -2,17 +2,15 @@ package com.imaginationoverboard.bouncergbleaderboard.controller;
 
 import com.imaginationoverboard.bouncergbleaderboard.domain.HighscoreList;
 import com.imaginationoverboard.bouncergbleaderboard.domain.LeaderboardEntry;
-import com.imaginationoverboard.bouncergbleaderboard.service.LeaderboardRepository;
+import com.imaginationoverboard.bouncergbleaderboard.service.LeaderboardService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Limit;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,7 +24,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class LeaderboardController {
 
-    private final LeaderboardRepository repository;
+    private final LeaderboardService service;
 
     @GetMapping("/top")
     public ResponseEntity<HighscoreList> getTop(
@@ -36,11 +34,9 @@ public class LeaderboardController {
         try {
             log.info("[top] Request received with entries limit: " + entries);
 
-            List<LeaderboardEntry> results = repository
-                    .findByOrderByLevelDescTimeScoreAsc(Limit.of(entries.orElse(5)));
-            HighscoreList highscoreList = new HighscoreList(results);
+            HighscoreList highscoreList = service.getHighscoreList(entries);
 
-            log.info("[top] Found number of entries: " + results.size());
+            log.info("[top] Found number of entries: " + highscoreList.getHighscoreList().size());
 
             return ResponseEntity.status(HttpStatus.OK).body(highscoreList);
         } catch (Exception e) {
@@ -57,12 +53,11 @@ public class LeaderboardController {
         try {
             log.info("[insert] Request received");
 
-            LeaderboardEntry savedLeaderboardEntry = repository.save(leaderboardEntry);
-            URI uuid = new URI(savedLeaderboardEntry.getId().toString());
+            String id = service.insertHighscore(leaderboardEntry);
 
-            log.info(String.format("[insert] Inserted entry with UUID: [%s]", savedLeaderboardEntry.getId()));
+            log.info(String.format("[insert] Inserted entry with UUID: [%s]", id));
 
-            return ResponseEntity.created(uuid).build();
+            return ResponseEntity.created(new URI(id)).build();
         } catch (DataIntegrityViolationException e) {
             log.error(e.getMessage(), e);
             return ResponseEntity.badRequest().build();
