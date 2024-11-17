@@ -26,6 +26,12 @@ public class LeaderboardController {
 
     private final LeaderboardService service;
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        log.info("[ping] Ping request received");
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @GetMapping("/top")
     public ResponseEntity<HighscoreList> getTop(
             @RequestParam
